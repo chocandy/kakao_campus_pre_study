@@ -1,0 +1,186 @@
+# 비동기 심화와 유의사항 학습 정리
+
+## 1. 비동기 작업 취소(cancel)
+
+모든 작업을 끝까지 실행하는 것이 항상 좋은 것은 아니다.
+
+취소가 필요한 상황:
+- 사용자가 페이지 이탈
+- Timeout 초과
+- 더 최신 요청 발생
+
+불필요한 작업은 시스템 자원 확보를 위해 중단해야 한다.
+
+---
+
+## 2. task.cancel()
+
+비동기 작업 취소 요청 함수.
+
+```python id="4n4sls"
+task.cancel()
+```
+
+### 특징
+- 즉시 종료가 아니라 "취소 요청"
+- 다음 await 지점에서 CancelledError 발생
+- try/except로 정리 코드 실행 가능
+
+```python id="l5qk7w"
+try:
+    await task
+except asyncio.CancelledError:
+    print("취소 확인")
+```
+
+---
+
+## 3. 주요 asyncio 에러 정리
+
+| 에러 | 발생 상황 | 대처 방법 |
+|---|---|---|
+| TimeoutError | wait_for 시간 초과 | try/except 처리 |
+| CancelledError | task.cancel() 호출 | 정리 작업 수행 |
+| RuntimeError | asyncio.run 중첩 호출 | await 사용 |
+| RuntimeWarning | await 누락 | await/create_task 사용 |
+
+---
+
+## 4. 무한 동시성의 위험
+
+너무 많은 비동기 요청은 시스템 과부하를 유발할 수 있다.
+
+문제점:
+- API Rate Limit 초과
+- DB 연결 고갈
+- 메모리/CPU 과부하
+
+즉, 비동기도 동시 실행 수 조절이 중요하다.
+
+---
+
+## 5. Semaphore
+
+동시 실행 개수를 제한하는 기능.
+
+```python id="xy3ol0"
+sem = asyncio.Semaphore(2)
+```
+
+```python id="gl8b7u"
+async with sem:
+    await work()
+```
+
+### 특징
+- 지정한 개수만 동시에 실행
+- 나머지는 대기
+- API/DB 요청 제한에 자주 사용
+
+예:
+- 작업 10개 요청
+- Semaphore(3)
+- 실제로는 3개씩만 실행
+
+---
+
+## 6. async with 자원 관리
+
+비동기 환경에서는 네트워크 연결이나 DB 연결을 반드시 정리해야 한다.
+
+```python id="9gv2qa"
+async with httpx.AsyncClient() as client:
+    response = await client.get(url)
+```
+
+### 특징
+- 블록 종료 시 자동 정리
+- 에러 발생 시에도 cleanup 보장
+- 자원 누수 방지
+
+---
+
+## 7. 비동기 설계 3가지 원칙
+
+### 1) 비동기는 만능이 아님
+- CPU 계산보다 I/O 작업에 적합
+
+### 2) 전체 흐름을 비동기로 통일
+- 함수 하나만 async여서는 부족
+- 내부 라이브러리도 async 구조 필요
+
+### 3) 테스트 중요
+- 동시 실행 환경은 흐름이 복잡함
+- 예외/실패 상황 검증 필수
+
+---
+
+## 8. 비동기 프로그래밍의 대표 실수
+
+### await 누락
+
+```python id="xvty4t"
+result = fetch_data()
+```
+
+- 코루틴 객체만 생성
+- 실제 실행되지 않음
+- RuntimeWarning 발생
+
+반드시:
+
+```python id="nh9x17"
+result = await fetch_data()
+```
+
+---
+
+### time.sleep 사용
+
+```python id="m2m0ci"
+time.sleep(1)
+```
+
+- 이벤트 루프 전체 정지
+- 비동기 환경에서 치명적
+
+대신 사용:
+
+```python id="n5r8ol"
+await asyncio.sleep(1)
+```
+
+- 제어권 양보
+- 다른 작업 계속 실행 가능
+
+---
+
+## 9. 동기 함수 처리 방법
+
+동기 블로킹 함수는 이벤트 루프를 멈출 수 있다.
+
+해결 방법:
+- run_in_executor 사용
+
+```python id="c1e4ok"
+result = await loop.run_in_executor(
+    None,
+    blocking_io
+)
+```
+
+### 특징
+- 동기 함수를 별도 스레드에서 실행
+- 이벤트 루프 블로킹 방지
+- 레거시 코드 대응 가능
+
+---
+
+## 10. 핵심 정리
+
+- 비동기 작업은 필요 시 cancel()로 중단 가능
+- Semaphore로 동시 실행 수 제한 가능
+- async with로 자원 누수 방지
+- await 누락과 time.sleep 사용은 대표적인 실수
+- 비동기는 처리 속도보다 "동시 처리량(Throughput)" 향상에 강점이 있음
+- 비동기는 await를 통한 "협력적 멀티태스킹" 구조로 동작함

@@ -1,0 +1,209 @@
+# 테스트 자동화하기 학습 정리
+
+## 1. Fixture와 Parametrize
+
+Pytest에서는 Fixture와 Parametrize를 활용해 테스트 자동화를 효율적으로 구성할 수 있다.
+
+### Fixture
+- 테스트 전에 필요한 준비 작업 관리
+- DB 연결, 객체 생성 등 공통 환경 구성
+- 중복 코드 제거 가능
+
+### Parametrize
+- 하나의 테스트 함수에 여러 입력값 적용
+- 반복 테스트 자동화
+- 테스트 코드 간결화
+
+---
+
+## 2. Fixture 개념
+
+Fixture는 테스트 전후의 준비(Setup)와 정리(Teardown)를 담당한다.
+
+### 흐름
+```text
+Setup → Test → Teardown
+```
+
+예시:
+- DB 연결
+- 테스트 데이터 생성
+- 자원 해제
+
+---
+
+## 3. @pytest.fixture 문법
+
+```python id="zv4c8r"
+@pytest.fixture
+def sample_user():
+    return {"name": "Elice"}
+```
+
+테스트 함수에서 자동 주입 가능:
+
+```python id="m8y1gq"
+def test_name(sample_user):
+    assert sample_user["name"] == "Elice"
+```
+
+### 특징
+- 테스트 함수 매개변수 이름으로 사용
+- return 값 자동 전달
+- 여러 테스트에서 재사용 가능
+
+---
+
+## 4. Fixture Scope
+
+```python id="4x8o3t"
+@pytest.fixture(scope="module")
+```
+
+### scope 종류
+| scope | 의미 |
+|---|---|
+| function | 함수마다 생성 |
+| class | 클래스 단위 |
+| module | 파일 단위 |
+| session | 전체 테스트 공유 |
+
+---
+
+## 5. conftest.py
+
+Fixture를 여러 테스트 파일에서 공유하는 파일.
+
+프로젝트 구조 예시:
+
+```text
+project/
+└── tests/
+    ├── conftest.py
+    ├── test_user.py
+    └── test_order.py
+```
+
+### 특징
+- import 없이 자동 인식
+- 공통 Fixture 중앙 관리 가능
+
+---
+
+## 6. 데코레이터(Decorator)
+
+함수에 기능을 추가하는 문법.
+
+```python id="w5f3lz"
+@my_decorator
+def greet():
+    print("Hello")
+```
+
+### 특징
+- 함수 자체 수정 없이 기능 추가
+- 여러 함수에 동일 기능 반복 적용 가능
+
+---
+
+## 7. Parametrize
+
+하나의 테스트 함수로 여러 테스트 케이스 실행 가능.
+
+### 기존 방식
+
+```python id="sj5zq1"
+def test_add_1():
+    assert add(1, 2) == 3
+
+def test_add_2():
+    assert add(0, 0) == 0
+```
+
+중복 코드 증가 문제 발생.
+
+---
+
+## 8. @pytest.mark.parametrize
+
+```python id="6m8h0r"
+@pytest.mark.parametrize(
+    "a, b, expected",
+    [
+        (1, 2, 3),
+        (0, 0, 0),
+        (-1, 1, 0),
+    ]
+)
+def test_add(a, b, expected):
+    assert add(a, b) == expected
+```
+
+### 특징
+- 각 튜플이 독립 테스트로 실행
+- 코드 중복 감소
+- 테스트 케이스 추가 쉬움
+
+---
+
+## 9. Marker
+
+테스트에 라벨을 붙여 실행 제어 가능.
+
+```python id="o1v6yt"
+@pytest.mark.slow
+def test_heavy():
+    pass
+```
+
+실행 시:
+
+```bash
+pytest -m slow
+```
+
+---
+
+## 10. skip / skipif / xfail
+
+### skip
+무조건 테스트 건너뛰기
+
+```python id="7h4q2e"
+@pytest.mark.skip(reason="미구현")
+```
+
+---
+
+### skipif
+조건 만족 시 건너뛰기
+
+```python id="q8r2zs"
+@pytest.mark.skipif(
+    sys.platform == "win32"
+)
+```
+
+---
+
+### xfail
+실패가 예상되는 테스트 표시
+
+```python id="7m9d0l"
+@pytest.mark.xfail(reason="버그 수정 중")
+```
+
+### 특징
+- 실패해도 전체 테스트 실패로 처리되지 않음
+- 버그 추적용으로 활용 가능
+
+---
+
+## 11. 핵심 정리
+
+- Fixture는 테스트 환경 준비 자동화에 사용
+- conftest.py로 Fixture 공유 가능
+- Parametrize는 반복 테스트를 간결하게 작성 가능
+- Marker를 통해 테스트 실행 전략 관리 가능
+- skip, skipif, xfail로 테스트 상태 제어 가능
+- 테스트 자동화는 유지보수성과 개발 효율을 크게 향상시킴

@@ -1,0 +1,135 @@
+# 안정적인 비동기: 예외와 타임아웃 학습 정리
+
+## 1. 비동기에서도 예외 처리는 중요
+
+실무 환경에서는 모든 요청이 항상 성공하지 않는다.
+
+대표적인 실패 원인:
+- 네트워크 오류
+- 잘못된 입력값
+- 외부 API 장애
+
+따라서 실패를 예외 상황이 아닌 "기본적으로 고려해야 할 요소"로 다뤄야 한다.
+
+---
+
+## 2. 단일 코루틴 예외 처리
+
+비동기 함수도 기본적인 try/except 방식 사용 가능.
+
+```python id="nhn6qo"
+try:
+    result = await risky_task()
+except ValueError as e:
+    print(e)
+```
+
+### 핵심
+- await 중 발생한 예외 처리 가능
+- 일반 Python 예외 처리 방식과 동일
+
+---
+
+## 3. gather()의 기본 예외 동작
+
+```python id="7qspw4"
+await asyncio.gather(task_a(), task_b())
+```
+
+### 특징
+- 하나의 작업에서 예외 발생 시
+- 예외가 즉시 호출자에게 전달됨
+- 나머지 작업은 자동 취소되지 않음
+
+즉, 일부 작업은 계속 실행될 수 있다.
+
+---
+
+## 4. return_exceptions=True
+
+예외를 결과값처럼 수집하는 옵션.
+
+```python id="r8nydw"
+results = await asyncio.gather(
+    task_a(),
+    task_b(),
+    return_exceptions=True
+)
+```
+
+### 특징
+- 예외도 리스트에 포함
+- 각 작업 성공/실패 개별 확인 가능
+- 실패한 작업만 재시도 가능
+- 부분 성공 데이터 활용 가능
+
+---
+
+## 5. gather() vs TaskGroup()
+
+| 구분 | gather() | TaskGroup |
+|---|---|---|
+| 실패 처리 | 예외 전파 | 전체 안전 취소 |
+| 특징 | 결과 수집 중심 | 안정적인 그룹 관리 |
+| 사용 상황 | 단순 병렬 처리 | 실무형 안정성 필요 |
+
+---
+
+## 6. Timeout의 필요성
+
+비동기 작업은 외부 API나 네트워크 문제로 무한 대기 상태에 빠질 수 있다.
+
+문제점:
+- 이벤트 루프 블로킹
+- 시스템 전체 지연
+- 무한 로딩 발생
+
+따라서 "얼마나 기다릴지" 제한해야 한다.
+
+---
+
+## 7. asyncio.wait_for()
+
+작업 제한 시간을 설정하는 함수.
+
+```python id="w3ukha"
+result = await asyncio.wait_for(
+    slow_task(),
+    timeout=2.0
+)
+```
+
+### 특징
+- 제한 시간 내 완료 → 정상 반환
+- 시간 초과 → TimeoutError 발생
+- 초과 시 작업 자동 취소
+
+---
+
+## 8. TimeoutError 처리
+
+```python id="2k73rx"
+try:
+    result = await asyncio.wait_for(
+        slow_task(),
+        timeout=2.0
+    )
+except asyncio.TimeoutError:
+    print("시간 초과")
+```
+
+### 활용
+- 재시도 처리
+- 에러 메시지 반환
+- 시스템 보호
+
+---
+
+## 9. 핵심 정리
+
+- 비동기 환경에서도 예외 처리는 필수
+- gather()는 예외 전파 방식 주의 필요
+- return_exceptions=True로 부분 성공 처리 가능
+- TaskGroup은 안정적인 작업 관리에 유리
+- asyncio.wait_for()로 무한 대기 방지 가능
+- 실무에서는 Timeout 설정이 매우 중요

@@ -1,0 +1,149 @@
+# 동시 처리 극대화 학습 정리
+
+## 1. 동시 처리의 핵심 개념
+
+비동기 작업은 순차적으로 실행하지 않고 여러 작업을 동시에 실행할 수 있다.
+
+예시:
+- 작업 A : 1초
+- 작업 B : 2초
+- 작업 C : 5초
+
+순차 실행:
+- 총 8초 소요
+
+동시 실행:
+- 가장 오래 걸리는 작업 기준
+- 총 약 5초 소요
+
+즉, 전체 실행 시간을 크게 단축할 수 있다.
+
+---
+
+## 2. asyncio.gather()
+
+여러 비동기 작업을 한 번에 묶어서 동시에 실행하는 함수.
+
+### 특징
+- 여러 코루틴 동시 실행
+- 모든 작업 완료 후 결과 반환
+- 결과는 리스트(List) 형태
+- 입력 순서대로 결과 보장
+
+```python id="yjlwmn"
+results = await asyncio.gather(
+    task_a(),
+    task_b(),
+    task_c()
+)
+```
+
+---
+
+## 3. 순차 실행 vs 동시 실행
+
+### 순차 실행
+
+```python id="rmb4r7"
+await task("A", 1)
+await task("B", 2)
+await task("C", 3)
+```
+
+- 총 약 6초
+
+### 동시 실행
+
+```python id="8qzhls"
+await asyncio.gather(
+    task("A", 1),
+    task("B", 2),
+    task("C", 3)
+)
+```
+
+- 총 약 3초
+
+---
+
+## 4. gather() 사용 상황
+
+### 사용하기 좋은 경우
+- 독립적인 API 요청
+- 순서가 중요하지 않은 작업
+- 여러 결과를 한 번에 수집할 때
+
+### 주의점
+- 동시에 너무 많은 요청 시 시스템 과부하 가능
+
+---
+
+## 5. TaskGroup
+
+Python 3.11에서 추가된 안전한 비동기 작업 관리 방식.
+
+### 특징
+- 관련 작업들을 하나의 그룹으로 관리
+- 하나 실패 시 나머지 작업 자동 취소
+- 작업 완료까지 안전하게 보장
+
+```python id="lzy3yc"
+async with asyncio.TaskGroup() as tg:
+    tg.create_task(task_a())
+    tg.create_task(task_b())
+```
+
+---
+
+## 6. gather() vs TaskGroup
+
+| 구분 | gather() | TaskGroup |
+|---|---|---|
+| 목적 | 결과 수집 | 안전한 작업 관리 |
+| 실패 처리 | 다른 작업 계속 진행 | 전체 자동 취소 |
+| 사용 상황 | 단순 병렬 처리 | 실무형 안정성 필요 |
+
+---
+
+## 7. async for & async with
+
+### async for
+비동기 반복 처리
+
+```python id="lffykf"
+async for item in aiter:
+    print(item)
+```
+
+### async with
+비동기 자원 관리
+
+```python id="ys62f4"
+async with httpx.AsyncClient() as client:
+    resp = await client.get(url)
+```
+
+- 블록 종료 시 자동 정리
+- 네트워크/DB 연결 관리에 사용
+
+---
+
+## 8. 실전 비동기 활용
+
+비동기는 대규모 API 요청 처리에 많이 사용된다.
+
+활용 예시:
+- 외부 API 동시 호출
+- 서비스 상태 확인
+- 여러 데이터 조회
+- 네트워크 요청 최적화
+
+---
+
+## 9. 핵심 정리
+
+- asyncio.gather()는 여러 작업을 동시에 실행하여 시간 단축
+- TaskGroup은 안전성과 예외 처리를 강화한 구조
+- async with는 자원 자동 정리에 유용
+- 비동기는 I/O 작업에서 매우 큰 효율을 제공
+- 실무에서는 API 요청 처리와 네트워크 작업에 많이 사용됨

@@ -1,0 +1,181 @@
+# 테스트의 개념과 pytest 시작하기 학습 정리
+
+## 1. 테스트란?
+
+테스트는 입력값을 넣었을 때 기대한 결과가 정확히 나오는지 코드로 검증하는 과정이다.
+
+```python id="6k4e0d"
+입력(Input) + 실행(Function) = 기대 결과(Expected Output)
+```
+
+프로젝트 규모가 커질수록 기능 수정 시 기존 기능이 깨질 가능성이 높아지므로 테스트가 중요하다.
+
+---
+
+## 2. 테스트 종류
+
+| 종류 | 특징 |
+|---|---|
+| Unit Test | 함수/메서드 단위 검증 |
+| Integration Test | 모듈 간 상호작용 검증 |
+| System Test | 전체 시스템 동작 검증 |
+| Acceptance Test | 사용자 요구사항 충족 여부 확인 |
+
+---
+
+## 3. 테스트 코드가 필요한 이유
+
+### 문제 조기 발견
+- 버그 원인 빠르게 추적 가능
+
+### 리팩토링 용이
+- 코드 수정 후 기존 기능 정상 동작 확인 가능
+
+### 개발 효율 향상
+- 반복 디버깅 시간 감소
+- 안정적인 코드 수정 가능
+
+---
+
+## 4. 유닛 테스트(Unit Test)
+
+특정 함수나 모듈이 의도대로 동작하는지 독립적으로 검증하는 테스트.
+
+특징:
+- 빠른 실행
+- 작은 단위 검증
+- 회귀 테스트 기반 제공
+
+---
+
+## 5. 유닛 테스트의 F.I.R.S.T 원칙
+
+| 원칙 | 의미 |
+|---|---|
+| Fast | 빠르게 실행 |
+| Independent | 테스트끼리 독립 |
+| Repeatable | 언제 실행해도 동일 결과 |
+| Self-validating | 자동으로 성공/실패 판단 |
+| Timely | 코드 작성과 함께 테스트 작성 |
+
+---
+
+## 6. 테스트의 AAA 구조
+
+### Arrange
+테스트 환경 준비
+
+### Act
+기능 실행
+
+### Assert
+예상 결과 검증
+
+```python id="pp03q2"
+# Arrange
+a, b = 2, 3
+
+# Act
+result = add(a, b)
+
+# Assert
+assert result == 5
+```
+
+---
+
+## 7. unittest vs pytest
+
+| 구분 | unittest | pytest |
+|---|---|---|
+| 문법 | 클래스 기반 | 함수 기반 |
+| 검증 방식 | assertEqual() 사용 | assert 사용 |
+| 특징 | 상대적으로 복잡 | 간결하고 직관적 |
+
+pytest는 함수와 assert만으로 테스트 작성 가능하다.
+
+---
+
+## 8. pytest의 장점
+
+### 간결함
+- 복잡한 클래스 없이 작성 가능
+
+### 호환성
+- unittest 코드도 실행 가능
+
+### 확장성
+- 다양한 플러그인 지원
+
+---
+
+## 9. pytest 기본 문법
+
+```python id="m7vdjg"
+def test_add():
+    result = 2 + 3
+    assert result == 5
+```
+
+### 특징
+- 함수명은 test_ 로 시작
+- assert로 결과 검증
+
+---
+
+## 10. pytest 명칭 규약
+
+### 파일명
+```python id="c2jz8f"
+test_*.py
+*_test.py
+```
+
+### 함수명
+```python id="gxmsy9"
+def test_example():
+```
+
+pytest는 규칙에 맞는 파일과 함수를 자동 탐색한다.
+
+---
+
+## 11. pytest assert 활용
+
+```python id="i1mfhl"
+assert result == expected
+assert value in items
+assert result is None
+assert len(items) > 0
+assert isinstance(data, list)
+```
+
+pytest는 실패 원인을 상세하게 보여준다.
+
+---
+
+## 12. pytest 실행 옵션
+
+```bash
+pytest -v
+pytest -k keyword
+pytest -x
+pytest -s
+```
+
+### 주요 옵션
+- -v : 상세 출력
+- -k : 특정 테스트 실행
+- -x : 실패 시 즉시 중단
+- -s : print 출력 확인
+
+---
+
+## 13. 핵심 정리
+
+- 테스트는 코드의 안정성을 높이는 중요한 과정
+- Unit Test는 함수 단위 검증에 사용
+- pytest는 간결하고 직관적인 테스트 프레임워크
+- assert 기반으로 쉽게 테스트 작성 가능
+- 테스트는 리팩토링과 유지보수에 큰 도움을 줌
+- 자동화된 테스트는 미래 코드 변경에 대한 안전장치 역할을 함

@@ -1,0 +1,230 @@
+# 실전 테스트 학습 정리
+
+## 1. Mock의 개념
+
+실제 외부 환경(API, DB, 파일 시스템 등)을 직접 호출하지 않고 가짜 객체(Mock)로 대체하여 테스트하는 방식.
+
+### 목적
+- 외부 요인 차단
+- 순수 로직만 검증
+- 테스트 안정성 향상
+
+---
+
+## 2. Mocking 원리
+
+```text
+테스트 대상 → Mock 객체 → 가짜 응답 반환
+```
+
+### 특징
+- 실제 API 호출 차단
+- 외부 환경 영향 제거
+- 빠르고 안전한 테스트 가능
+
+---
+
+## 3. Mock / MagicMock / patch
+
+### Mock
+기본 가짜 객체
+
+```python id="q5z1rv"
+from unittest.mock import Mock
+m = Mock(return_value=42)
+```
+
+### MagicMock
+매직 메서드까지 지원
+
+```python id="y3v7kp"
+from unittest.mock import MagicMock
+mm = MagicMock()
+```
+
+### patch
+실제 함수를 가짜 객체로 교체
+
+```python id="j7o1wn"
+@patch("app.send_email")
+```
+
+---
+
+## 4. patch 사용법
+
+### @patch 방식
+
+```python id="y5m2ea"
+@patch("app.send_email")
+def test_signup(mock_send):
+    app.signup("a@b.com")
+    assert mock_send.called
+```
+
+### with patch() 방식
+
+```python id="cv0x6n"
+with patch("app.send_email") as m:
+    app.signup("a@b.com")
+```
+
+### 특징
+- 테스트 종료 후 자동 복구
+- 실제 함수 호출 차단 가능
+
+---
+
+## 5. return_value vs side_effect
+
+### return_value
+항상 같은 값 반환
+
+```python id="tv5r6k"
+mock_api.return_value = {"ok": True}
+```
+
+---
+
+### side_effect
+호출마다 다른 응답 또는 예외 발생
+
+```python id="p9d0uk"
+mock_api.side_effect = [
+    "first",
+    "second"
+]
+```
+
+예외 시뮬레이션:
+
+```python id="9y7phs"
+mock_api.side_effect = TimeoutError
+```
+
+---
+
+## 6. 호출 검증 메서드
+
+```python id="c7j5zq"
+mock.assert_called()
+mock.assert_called_with("x")
+mock.assert_called_once_with("x")
+mock.assert_not_called()
+```
+
+### 특징
+- 함수 호출 여부 확인
+- 전달된 인자까지 검증 가능
+
+---
+
+# 테스트 커버리지
+
+## 7. 테스트 커버리지 개념
+
+내 코드 중 테스트가 실제 실행한 비율을 측정하는 기능.
+
+```bash
+pytest --cov=myapp
+```
+
+### 주요 지표
+| 항목 | 의미 |
+|---|---|
+| Stmts | 전체 코드 수 |
+| Miss | 테스트되지 않은 코드 |
+| Cover | 테스트 비율 |
+
+---
+
+## 8. pytest-cov 옵션
+
+### 빠진 코드 확인
+
+```bash
+pytest --cov=myapp --cov-report=term-missing
+```
+
+### HTML 리포트 생성
+
+```bash
+pytest --cov=myapp --cov-report=html
+```
+
+### 최소 커버리지 강제
+
+```bash
+pytest --cov-fail-under=80
+```
+
+---
+
+# 비동기 테스트
+
+## 9. pytest-asyncio
+
+비동기(async/await) 함수를 테스트하기 위한 라이브러리.
+
+설치 필요:
+```bash
+pip install pytest-asyncio
+```
+
+---
+
+## 10. 비동기 테스트 문법
+
+```python id="8g3c5t"
+@pytest.mark.asyncio
+async def test_fetch():
+    result = await fetch_data()
+    assert result == "success"
+```
+
+### 특징
+- async def 사용
+- await로 비동기 함수 실행
+- 이벤트 루프 자동 관리
+
+---
+
+## 11. 동기 테스트 vs 비동기 테스트
+
+### 동기 테스트
+
+```python id="a8t4pr"
+def test_sync():
+    result = fetch()
+```
+
+### 비동기 테스트
+
+```python id="9z4mqs"
+@pytest.mark.asyncio
+async def test_async():
+    result = await fetch_async()
+```
+
+---
+
+## 12. 비동기 테스트 핵심 흐름
+
+비동기 테스트도 기본 원리는 동일하다.
+
+```text
+입력 준비 → 함수 실행 → 결과 검증
+```
+
+달라지는 점:
+- await 실행 환경 필요
+- pytest-asyncio가 이벤트 루프 제공
+
+
+## 13. 핵심 정리
+
+- Mock은 외부 의존성을 제거하고 순수 로직만 검증하기 위해 사용
+- patch를 활용해 실제 함수를 가짜 객체로 교체 가능
+- pytest-cov로 테스트되지 않은 코드 영역 확인 가능
+- pytest-asyncio를 사용하면 async 함수 테스트 가능
+- 테스트는 단순 검증 도구가 아니라 좋은 코드 구조를 만드는 기준이 됨

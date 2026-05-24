@@ -1,0 +1,151 @@
+# 예외 처리와 경계값 테스트 학습 정리
+
+## 1. 테스트의 진짜 목적
+
+테스트는 단순히 코드의 "성공"만 확인하는 것이 아니다.
+
+핵심 목적:
+- 코드가 올바르게 실패하는지 검증
+- 미래 코드 수정에 대한 안전망 제공
+- 더 나은 소프트웨어 구조 유도
+
+---
+
+## 2. 정상 케이스만 테스트하면 부족
+
+예시:
+
+```python id="d4q7ru"
+divide(10, 2)  # 정상 동작
+divide(10, 0)  # 예외 상황
+```
+
+단순 정상 동작뿐 아니라,
+"잘못된 입력에서 올바르게 실패하는가?"를 반드시 검증해야 한다.
+
+---
+
+## 3. 테스트 코드의 두 가지 핵심
+
+| 종류 | 역할 |
+|---|---|
+| 기본 테스트 | 결과값 검증 |
+| 예외 테스트 | 에러 발생 여부 검증 |
+
+### 기본 테스트
+```python id="5g7j8k"
+def test_add():
+    assert add(2, 3) == 5
+```
+
+### 예외 테스트
+```python id="v9r2xa"
+with pytest.raises(ValueError):
+    divide(10, 0)
+```
+
+---
+
+## 4. pytest.raises()
+
+특정 예외가 발생하는지 검증하는 기능.
+
+```python id="o4k1qm"
+with pytest.raises(ValueError):
+    divide(10, 0)
+```
+
+### 동작 방식
+- 지정한 예외 발생 → 테스트 성공
+- 예외 미발생 → 테스트 실패
+- 다른 예외 발생 → 테스트 실패
+
+---
+
+## 5. match 옵션
+
+에러 종류뿐 아니라 에러 메시지까지 검증 가능.
+
+```python id="0h1lzk"
+with pytest.raises(
+    ValueError,
+    match="0으로 나눌 수 없습니다"
+):
+    divide(10, 0)
+```
+
+### 특징
+- 에러 메시지 문자열 검사
+- 예상한 원인인지 정밀 검증 가능
+
+---
+
+## 6. 예외 객체 저장
+
+```python id="t9m2zw"
+with pytest.raises(TypeError) as exc:
+    "a" + 1
+
+assert "str" in str(exc.value)
+```
+
+### 활용
+- 발생한 예외 메시지 직접 확인 가능
+- 상세 검증에 사용
+
+---
+
+## 7. 경계값 테스트(Boundary Test)
+
+경계 상황은 버그가 가장 많이 발생하는 영역이다.
+
+예시:
+- 0
+- 음수
+- 빈 문자열
+- 최대/최소 값
+
+```python id="m8c7xe"
+assert calculate(0) == 0
+assert len([]) == 0
+```
+
+---
+
+## 8. pytest 핵심 문법 정리
+
+### 파일/함수 이름 규칙
+
+```python id="b5xyqf"
+test_example.py
+def test_add():
+```
+
+### 결과 검증
+
+```python id="uvx9g0"
+assert result == expected
+```
+
+### 예외 검증
+
+```python id="i6u8nr"
+with pytest.raises(ValueError):
+```
+
+### 메시지 검증
+
+```python id="d1r0zs"
+match="error message"
+```
+
+---
+
+## 9. 핵심 정리
+
+- 테스트는 성공보다 "올바른 실패" 검증이 중요
+- 정상 케이스와 예외 상황 모두 테스트해야 함
+- pytest.raises()로 예외 상황 검증 가능
+- match 옵션으로 에러 메시지까지 확인 가능
+- 경계값 테스트는 버그 예방에 매우 중요
+- 테스트는 미래 코드 수정에 대한 안전망 역할 수행
